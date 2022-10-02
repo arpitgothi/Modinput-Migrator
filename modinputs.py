@@ -1,4 +1,13 @@
-#By agothi (Arpit Gothi)
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+#######################################
+# -*- Credits -*-                     #
+#                                     #
+# Author: Arpit Gothi (agothi)        #
+#                                     #
+#######################################
+
 
 import sys, getopt
 import os
@@ -16,10 +25,8 @@ from enum import Enum
 
 FORMATTER = logging.Formatter("%(asctime)s — %(levelname)s - %(name)s — %(message)s")
 SYSLOG_FORMATTER = logging.Formatter("%(levelname)s - %(name)s — %(message)s")
-LOG_FILE = "/Users/agothi/modinputs.log"
+LOG_FILE = "/opt/splunk/tmp/modinputs.log"
 CONFIGS_DIR = "/opt/splunk/var/lib/splunk/modinputs"
-#S3_STATE_BUCKET="state-victor-vpc-02fdb68c7b52a16df-us-west-2-lve"
-#STACK_ID="saveonfoods"
 
 
 def run_command(cmd):
@@ -41,8 +48,6 @@ def get_bucket_idm_path(bucket,location):
     process_output = process_output.rsplit(b"\n", 1)[0]
     process_output = os.path.join(location,process_output.decode().split(' ')[-1].replace("/", ""),"modinputs")
     return process_output
-
-PATH_IDM=get_bucket_idm_path(S3_STATE_BUCKET, os.path.join(STACK_ID, 'noah-migration','backups','idm_modinputs') + "/")
 
 
 def get_console_handler():
@@ -173,17 +178,18 @@ def chown_files(owner, path):
         log(error.output, LOG_LEVEL_ERROR)
         exit(1)
 
-#path = os.path.join('opt','splunk', 'var', 'lib', 'splunk', 'modinputs')
 
 S3_STATE_BUCKET=get_facter_output("s3_splunk_stack_state_bucket_name").decode()
 STACK_ID=get_facter_output("stackid").decode()
 is_primary_sh = get_facter_output("is_primary_sh").decode()
 
+PATH_IDM=get_bucket_idm_path(S3_STATE_BUCKET, os.path.join(STACK_ID, 'noah-migration','backups','idm_modinputs') + "/")
+
 if is_primary_sh == "true":
   download_configs(PATH_IDM)
   chown_files("splunk", CONFIGS_DIR)
+  print("Party time modiput migration completed :)")
+  log("Party time modiput migration completed :)")
 else:
-  print("This is not Primary SH")
-
-
-
+  print("This is not Primary SH :(")
+  log("This is not Primary SH :(", LOG_LEVEL_ERROR)
